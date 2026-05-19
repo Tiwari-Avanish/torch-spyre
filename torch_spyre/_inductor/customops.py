@@ -287,6 +287,26 @@ def _ones_scalar_fake(
     return torch.empty(1, dtype=dtype, device="spyre")
 
 
+@torch.library.custom_op("spyre::zeros_scalar", mutates_args=(), device_types="spyre")
+def spyre_zeros_scalar(
+    device: torch.device,
+    dtype: Optional[torch.dtype] = None,
+) -> torch.Tensor:
+    """Return a 1-element tensor containing 0 on Spyre. Used for zeros via identity broadcast."""
+    warn_fallback("torch.ops.spyre.zeros_scalar")
+    out = torch.empty(1, dtype=dtype, device=device)
+    out.fill_(0)
+    return out
+
+
+@spyre_zeros_scalar.register_fake
+def _zeros_scalar_fake(
+    device: torch.device,
+    dtype: Optional[torch.dtype] = None,
+):
+    return torch.empty(1, dtype=dtype, device="spyre")
+
+
 @torch.library.custom_op(
     "spyre::copy_from_d2d", mutates_args=("dst",), device_types="spyre"
 )

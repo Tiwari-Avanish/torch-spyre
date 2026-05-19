@@ -346,6 +346,26 @@ def new_ones_decomp(
     return scalar.reshape(()) if not size else scalar.expand(size).clone()
 
 
+@register_spyre_decomposition([torch.ops.aten.zeros_like.default])
+def zeros_like_decomp(
+    input: torch.Tensor,
+    *,
+    dtype: Optional[torch.dtype] = None,
+    layout: Optional[torch.layout] = None,
+    device: Optional[torch.device] = None,
+    pin_memory: Optional[bool] = None,
+    memory_format: Optional[torch.memory_format] = None,
+) -> torch.Tensor:
+    assert layout in (torch.strided, None), f"doesn't support layout={layout}"
+    assert not pin_memory, f"doesn't support pin_memory={pin_memory}"
+
+    dev = device if device is not None else input.device
+    dt = dtype if dtype is not None else input.dtype
+    scalar = torch.ops.spyre.zeros_scalar(dev, dtype=dt)
+
+    return scalar.expand(input.size()).clone()
+
+
 # To avoid constant folding, we introduce a custom op `spyre::full` that runs
 # torch.full on CPU and copies the result to Spyre. Remove this workaround once
 # Spyre supports one-element tensors.
